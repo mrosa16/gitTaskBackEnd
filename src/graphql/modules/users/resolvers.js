@@ -1,4 +1,5 @@
 const { Query } = require("pg");
+const generator = require("../../../helpers/generator");
 
 module.exports = {
     User:{
@@ -10,17 +11,24 @@ module.exports = {
       async user(_, { login }, { dataSources }) {
         const userFound = await dataSources.userRegisterService.getUserByLogin(login);
 
-          if(userFound) return userFound
-          
+          if(userFound) {
+            userFound.token = generator.createToken(userFound.id)
+            return userFound
+          }
+                 
           const { 
             login: loginGit, 
             avatar_url,
           } = await dataSources.gitHubService.getUser(login);
 
-          return await dataSources.userRegisterService.addUser({
+          const newUser =  await dataSources.userRegisterService.addUser({
             login: loginGit,
             avatar_url: avatar_url,
           })
+
+          newUser.token = generator.createToken(newUser.id)
+
+          return newUser
       },
     },
   };
